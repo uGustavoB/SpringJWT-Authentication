@@ -22,14 +22,18 @@ import java.util.Optional;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    @Autowired
     private UserRepository userRepository;
 
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    public AuthController(TokenService tokenService, PasswordEncoder passwordEncoder, UserRepository userRepository) {
+        this.tokenService = tokenService;
+        this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {

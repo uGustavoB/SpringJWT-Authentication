@@ -15,8 +15,12 @@ import java.util.UUID;
 @RequestMapping("/user")
 public class UserController {
 
+    private final UserRepository userRepository;
+
     @Autowired
-    private UserRepository userRepository;
+    public UserController(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @GetMapping("/")
     public ResponseEntity<User> getUser(HttpServletRequest request) {

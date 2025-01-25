@@ -18,10 +18,14 @@ import java.util.Collections;
 
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
+    private final TokenService tokenService;
+    private final UserRepository userRepository;
+
     @Autowired
-    TokenService tokenService;
-    @Autowired
-    UserRepository userRepository;
+    public SecurityFilter(UserRepository userRepository, TokenService tokenService) {
+        this.userRepository = userRepository;
+        this.tokenService = tokenService;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
