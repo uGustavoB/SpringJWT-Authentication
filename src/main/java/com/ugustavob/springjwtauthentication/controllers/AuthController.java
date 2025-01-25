@@ -1,11 +1,12 @@
 package com.ugustavob.springjwtauthentication.controllers;
 
 import com.ugustavob.springjwtauthentication.dto.LoginRequestDTO;
+import com.ugustavob.springjwtauthentication.dto.LoginResponseDTO;
 import com.ugustavob.springjwtauthentication.dto.RegisterRequestDTO;
-import com.ugustavob.springjwtauthentication.dto.ResponseDTO;
 import com.ugustavob.springjwtauthentication.entities.user.User;
 import com.ugustavob.springjwtauthentication.repositories.user.UserRepository;
 import com.ugustavob.springjwtauthentication.security.TokenService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -31,19 +32,19 @@ public class AuthController {
     private TokenService tokenService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequest){
-        User user = userRepository.findByEmail(loginRequest.email()).orElseThrow(() -> new RuntimeException("User not found"));
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
+        Optional<User> user = userRepository.findByEmail(loginRequest.email());
 
-        if(passwordEncoder.matches(loginRequest.password(), user.getPassword())){
-            String token = tokenService.generateToken(user);
-            return ResponseEntity.ok(new ResponseDTO(user.getName(), token));
+        if (user.isPresent() && passwordEncoder.matches(loginRequest.password(), user.get().getPassword())) {
+            String token = tokenService.generateToken(user.get());
+            return ResponseEntity.ok(new LoginResponseDTO(user.get().getName(), token));
         }
 
         return ResponseEntity.badRequest().build();
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequestDTO body){
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO body){
         Optional<User> user = userRepository.findByEmail(body.email());
 
         if (user.isEmpty()) {
@@ -55,7 +56,7 @@ public class AuthController {
             userRepository.save(newUser);
 
             String token = tokenService.generateToken(newUser);
-            return ResponseEntity.ok(new ResponseDTO(newUser.getName(), token));
+            return ResponseEntity.ok(new LoginResponseDTO(newUser.getName(), token));
         }
 
         return ResponseEntity.badRequest().build();
