@@ -3,12 +3,13 @@ package com.ugustavob.springjwtauthentication.controllers;
 import com.ugustavob.springjwtauthentication.dto.LoginRequestDTO;
 import com.ugustavob.springjwtauthentication.dto.LoginResponseDTO;
 import com.ugustavob.springjwtauthentication.dto.RegisterRequestDTO;
-import com.ugustavob.springjwtauthentication.entities.user.User;
+import com.ugustavob.springjwtauthentication.entities.user.UserEntity;
 import com.ugustavob.springjwtauthentication.repositories.user.UserRepository;
 import com.ugustavob.springjwtauthentication.security.TokenService;
+import com.ugustavob.springjwtauthentication.useCases.CreateUserUseCase;
+import com.ugustavob.springjwtauthentication.useCases.LoginUserUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,47 +23,30 @@ import java.util.Optional;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    private UserRepository userRepository;
-
-    private PasswordEncoder passwordEncoder;
-
-    private TokenService tokenService;
-
-    @Autowired
-    public AuthController(TokenService tokenService, PasswordEncoder passwordEncoder, UserRepository userRepository) {
-        this.tokenService = tokenService;
-        this.passwordEncoder = passwordEncoder;
-        this.userRepository = userRepository;
-    }
+    private final LoginUserUseCase loginUserUseCase;
+    private final TokenService tokenService;
+    private final CreateUserUseCase createUserUseCase;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
-        Optional<User> user = userRepository.findByEmail(loginRequest.email());
-
-        if (user.isPresent() && passwordEncoder.matches(loginRequest.password(), user.get().getPassword())) {
-            String token = tokenService.generateToken(user.get());
-            return ResponseEntity.ok(new LoginResponseDTO(user.get().getName(), token));
+        try {
+            UserEntity user = loginUserUseCase.execute(loginRequest);
+            String token = tokenService.generateToken(user);
+            return ResponseEntity.ok(new LoginResponseDTO(user.getName(), token));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        return ResponseEntity.badRequest().build();
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO body){
-        Optional<User> user = userRepository.findByEmail(body.email());
 
-        if (user.isEmpty()) {
-            User newUser = new User();
-            newUser.setName(body.name());
-            newUser.setEmail(body.email());
-            newUser.setPassword(passwordEncoder.encode(body.password()));
-
-            userRepository.save(newUser);
-
+        try {
+            UserEntity newUser = createUserUseCase.execute(body);
             String token = tokenService.generateToken(newUser);
             return ResponseEntity.ok(new LoginResponseDTO(newUser.getName(), token));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        return ResponseEntity.badRequest().build();
     }
 }

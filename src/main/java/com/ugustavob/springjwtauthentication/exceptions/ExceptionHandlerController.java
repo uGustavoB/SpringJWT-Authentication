@@ -33,6 +33,16 @@ public class ExceptionHandlerController {
         return new ResponseEntity<>(dto, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler
+    public ResponseEntity<ErrorMessageDTO> handleInvalidCredentialsException(InvalidCredentialsException e) {
+        return new ResponseEntity<>(new ErrorMessageDTO(e.getMessage(), ""), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorMessageDTO> handleUserNotFoundException(UserNotFoundException e) {
+        return new ResponseEntity<>(new ErrorMessageDTO(e.getMessage(), ""), HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorMessageDTO> handleException(Exception e) {
         return new ResponseEntity<>(new ErrorMessageDTO(e.getMessage(), ""), HttpStatus.INTERNAL_SERVER_ERROR);

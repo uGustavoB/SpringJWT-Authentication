@@ -1,8 +1,9 @@
 package com.ugustavob.springjwtauthentication.security;
 
-import com.ugustavob.springjwtauthentication.entities.user.User;
+import com.ugustavob.springjwtauthentication.entities.user.UserEntity;
 import com.ugustavob.springjwtauthentication.repositories.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -22,9 +23,9 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("User " +
+        UserEntity user = userRepository.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("User " +
                 "not found"));
-        return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(),
+        return new User(user.getEmail(), user.getPassword(),
                 new ArrayList<>());
     }
 }

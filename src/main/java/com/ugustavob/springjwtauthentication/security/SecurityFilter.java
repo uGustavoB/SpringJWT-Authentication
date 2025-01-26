@@ -1,6 +1,6 @@
 package com.ugustavob.springjwtauthentication.security;
 
-import com.ugustavob.springjwtauthentication.entities.user.User;
+import com.ugustavob.springjwtauthentication.entities.user.UserEntity;
 import com.ugustavob.springjwtauthentication.repositories.user.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -33,7 +33,7 @@ public class SecurityFilter extends OncePerRequestFilter {
         var login = tokenService.validateToken(token);
 
         if(login != null){
-            User user = userRepository.findByEmail(login).orElseThrow(() -> new RuntimeException("User Not Found"));
+            UserEntity user = userRepository.findByEmail(login).orElseThrow(() -> new RuntimeException("User Not Found"));
             var authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
             request.setAttribute("id", user.getId());
             var authentication = new UsernamePasswordAuthenticationToken(user, null, authorities);
