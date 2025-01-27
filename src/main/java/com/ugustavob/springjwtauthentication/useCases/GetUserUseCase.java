@@ -17,10 +17,8 @@ public class GetUserUseCase {
     private final UserRepository userRepository;
 
     public UserEntity execute(UUID id) {
-        System.out.println("id: " + id);
         UserEntity user = userRepository.findById(UUID.fromString(id.toString())).orElse(null);
 
-        System.out.println("user: " + user);
         if (user == null) {
             throw new UserNotFoundException();
         }
