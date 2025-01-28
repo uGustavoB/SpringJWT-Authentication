@@ -32,11 +32,6 @@ public class CreateUserUseCase {
             roles.add("ROLE_USER");
             newUser.setRole(roles);
 
-            System.out.println("user name: " + newUser.getName());
-            System.out.println("user email: " + newUser.getEmail());
-            System.out.println("user password: " + newUser.getPassword());
-            System.out.println("user role: " + newUser.getRole());
-
             return userRepository.save(newUser);
         }
 

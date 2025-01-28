@@ -74,8 +74,6 @@ public class RoleController {
         try {
             UserEntity user = getUserUseCase.execute(id);
 
-            System.out.println(user.getRole());
-
             if (user.getRole().contains("ROLE_ADMIN")) {
                 UserEntity updatedUser = assignRoleUseCase.execute(assignRoleRequestDTO);
 

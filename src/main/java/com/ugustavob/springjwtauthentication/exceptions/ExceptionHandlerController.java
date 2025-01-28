@@ -44,7 +44,7 @@ public class ExceptionHandlerController {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorMessageDTO> handleException(Exception e) {
-        return new ResponseEntity<>(new ErrorMessageDTO(e.getMessage(), ""), HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<String> handleException(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred");
     }
 }
