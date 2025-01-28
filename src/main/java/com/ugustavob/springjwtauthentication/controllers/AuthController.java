@@ -5,10 +5,14 @@ import com.ugustavob.springjwtauthentication.dto.LoginResponseDTO;
 import com.ugustavob.springjwtauthentication.dto.RegisterRequestDTO;
 import com.ugustavob.springjwtauthentication.entities.user.UserEntity;
 import com.ugustavob.springjwtauthentication.security.TokenService;
-import com.ugustavob.springjwtauthentication.useCases.CreateUserUseCase;
-import com.ugustavob.springjwtauthentication.useCases.LoginUserUseCase;
+import com.ugustavob.springjwtauthentication.useCases.user.CreateUserUseCase;
+import com.ugustavob.springjwtauthentication.useCases.user.LoginUserUseCase;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,10 +31,28 @@ public class AuthController {
     private final TokenService tokenService;
     private final CreateUserUseCase createUserUseCase;
 
-    @PostMapping("/login")
-    @Operation(summary = "Login", description = "Login with email and password")
+    @Operation(
+            summary = "Login",
+            description = "Login with email and password"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Login successful",
+                    content = @Content(schema = @Schema(implementation = LoginResponseDTO.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid email or password",
+                    content = @Content(schema = @Schema(implementation = String.class))
+            )
+    })
     @Schema(name = "LoginRequestDTO", implementation = LoginRequestDTO.class)
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
+    @PostMapping("/login")
+    public ResponseEntity<?> login(
+            @Parameter(description = "Email and password", required = true)
+            @Valid @RequestBody LoginRequestDTO loginRequest
+    ) {
         try {
             UserEntity user = loginUserUseCase.execute(loginRequest);
             String token = tokenService.generateToken(user);
@@ -41,10 +63,25 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/register")
     @Operation(summary = "Register", description = "Register with name, email and password")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Register successful",
+                    content = @Content(schema = @Schema(implementation = LoginResponseDTO.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid email or password",
+                    content = @Content(schema = @Schema(implementation = String.class))
+            )
+    })
     @Schema(name = "RegisterRequestDTO", implementation = RegisterRequestDTO.class)
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO body){
+    @PostMapping("/register")
+    public ResponseEntity<?> register(
+            @Parameter(description = "Name, email and password", required = true)
+            @Valid @RequestBody RegisterRequestDTO body
+    ){
         try {
             UserEntity newUser = createUserUseCase.execute(body);
             String token = tokenService.generateToken(newUser);

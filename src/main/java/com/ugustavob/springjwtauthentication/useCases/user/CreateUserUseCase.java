@@ -1,4 +1,4 @@
-package com.ugustavob.springjwtauthentication.useCases;
+package com.ugustavob.springjwtauthentication.useCases.user;
 
 import com.ugustavob.springjwtauthentication.dto.RegisterRequestDTO;
 import com.ugustavob.springjwtauthentication.entities.user.UserEntity;
@@ -9,14 +9,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class CreateUserUseCase {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final TokenService tokenService;
 
     public UserEntity execute(@Valid RegisterRequestDTO registerRequest) {
         Optional<UserEntity> user = userRepository.findByEmail(registerRequest.email());
@@ -27,7 +28,15 @@ public class CreateUserUseCase {
             newUser.setEmail(registerRequest.email());
             newUser.setPassword(passwordEncoder.encode(registerRequest.password()));
 
-            String token = tokenService.generateToken(newUser);
+            Set<String> roles = new HashSet<>();
+            roles.add("ROLE_USER");
+            newUser.setRole(roles);
+
+            System.out.println("user name: " + newUser.getName());
+            System.out.println("user email: " + newUser.getEmail());
+            System.out.println("user password: " + newUser.getPassword());
+            System.out.println("user role: " + newUser.getRole());
+
             return userRepository.save(newUser);
         }
 

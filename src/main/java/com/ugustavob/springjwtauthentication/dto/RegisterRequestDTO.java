@@ -16,5 +16,6 @@ public record RegisterRequestDTO(
         @NotBlank(message = "Password is required")
         @Length(min = 6, message = "Password must have at least 6 characters")
         @Schema(description = "Password of the user", example = "123456", requiredMode = Schema.RequiredMode.REQUIRED)
-        String password) {
+        String password
+) {
 }

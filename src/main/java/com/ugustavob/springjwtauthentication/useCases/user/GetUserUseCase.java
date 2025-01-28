@@ -1,12 +1,9 @@
-package com.ugustavob.springjwtauthentication.useCases;
+package com.ugustavob.springjwtauthentication.useCases.user;
 
 import com.ugustavob.springjwtauthentication.entities.user.UserEntity;
 import com.ugustavob.springjwtauthentication.exceptions.UserNotFoundException;
 import com.ugustavob.springjwtauthentication.repositories.user.UserRepository;
-import com.ugustavob.springjwtauthentication.security.TokenService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;

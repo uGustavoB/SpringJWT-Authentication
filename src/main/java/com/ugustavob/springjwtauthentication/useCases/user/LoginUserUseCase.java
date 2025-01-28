@@ -1,15 +1,12 @@
-package com.ugustavob.springjwtauthentication.useCases;
+package com.ugustavob.springjwtauthentication.useCases.user;
 
 import com.ugustavob.springjwtauthentication.dto.LoginRequestDTO;
-import com.ugustavob.springjwtauthentication.dto.LoginResponseDTO;
 import com.ugustavob.springjwtauthentication.entities.user.UserEntity;
 import com.ugustavob.springjwtauthentication.exceptions.InvalidCredentialsException;
 import com.ugustavob.springjwtauthentication.repositories.user.UserRepository;
 import com.ugustavob.springjwtauthentication.security.TokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
