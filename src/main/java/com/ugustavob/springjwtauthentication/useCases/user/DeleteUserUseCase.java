@@ -10,11 +10,11 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class GetUserUseCase {
+public class DeleteUserUseCase {
     private final UserRepository userRepository;
 
-    public UserEntity execute(UUID id) {
-        return userRepository.findById(UUID.fromString(id.toString()))
+    public void execute(UUID id) {
+        UserEntity deletedUser = userRepository.deleteByIdAndReturnEntity(id)
                 .orElseThrow(UserNotFoundException::new);
     }
 }

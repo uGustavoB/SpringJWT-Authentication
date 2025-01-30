@@ -2,6 +2,7 @@ package com.ugustavob.springjwtauthentication.controllers;
 
 import com.ugustavob.springjwtauthentication.dto.RegisterRequestDTO;
 import com.ugustavob.springjwtauthentication.entities.user.UserEntity;
+import com.ugustavob.springjwtauthentication.useCases.user.GetAllUsersUseCase;
 import com.ugustavob.springjwtauthentication.useCases.user.GetUserUseCase;
 import com.ugustavob.springjwtauthentication.useCases.user.UpdateUserUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,10 +22,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/me")
 @RequiredArgsConstructor
-@Tag(name = "User", description = "Endpoints for user")
-public class UserController {
+@Tag(name = "Me", description = "Endpoints for user management")
+public class MeController {
     private final GetUserUseCase getUserUseCase;
     private final UpdateUserUseCase updateUserUseCase;
 
