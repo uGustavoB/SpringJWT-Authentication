@@ -2,11 +2,15 @@ package com.ugustavob.springjwtauthentication.controllers;
 
 import com.ugustavob.springjwtauthentication.dto.AssignRoleRequestDTO;
 import com.ugustavob.springjwtauthentication.dto.GetAllUsersResponseDTO;
+import com.ugustavob.springjwtauthentication.dto.RegisterRequestDTO;
+import com.ugustavob.springjwtauthentication.dto.GetUserResponseDTO;
 import com.ugustavob.springjwtauthentication.entities.user.UserEntity;
+import com.ugustavob.springjwtauthentication.exceptions.UserNotFoundException;
 import com.ugustavob.springjwtauthentication.useCases.role.AssignRoleUseCase;
 import com.ugustavob.springjwtauthentication.useCases.user.DeleteUserUseCase;
 import com.ugustavob.springjwtauthentication.useCases.user.GetAllUsersUseCase;
 import com.ugustavob.springjwtauthentication.useCases.user.GetUserUseCase;
+import com.ugustavob.springjwtauthentication.useCases.user.UpdateUserUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -19,6 +23,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,10 +39,168 @@ public class UsersController {
     private final AssignRoleUseCase assignRoleUseCase;
     private final GetAllUsersUseCase getAllUsersUseCase;
     private final DeleteUserUseCase deleteUserUseCase;
+    private final UpdateUserUseCase updateUserUseCase;
+
+    @GetMapping("/me/")
+    @Operation(summary = "Get user", description = "Get the authenticated user's details.")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UserEntity.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Unauthorized",
+                                            summary = "Unauthorized",
+                                            value = "Unauthorized"
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "User not found",
+                                            summary = "User not found",
+                                            value = "User not found"
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
+            )
+    })
+    @Schema(name = "UserEntity", implementation = UserEntity.class)
+    @SecurityRequirement(name = "bearer")
+    public ResponseEntity<?> getUser(HttpServletRequest request) {
+        var id = (UUID) request.getAttribute("id");
+
+        if (id == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        try {
+            UserEntity user = getUserUseCase.execute(id);
+            return ResponseEntity.ok(new GetUserResponseDTO(user.getId(), user.getName(), user.getEmail()));
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/me/")
+    @Operation(summary = "Update user", description = "Update user by id")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User updated",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "User updated",
+                                            summary = "User updated",
+                                            value = "User updated successfully"
+                                    )
+                            },
+                            schema = @Schema(implementation = GetUserResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Unauthorized",
+                                            summary = "Unauthorized",
+                                            value = "Unauthorized"
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "User not found",
+                                            summary = "User not found",
+                                            value = "User not found"
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Unprocessable entity",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Unprocessable entity",
+                                            summary = "Name is required",
+                                            value = "Name is required"
+                                    ),
+                                    @ExampleObject(
+                                            name = "Unprocessable entity",
+                                            summary = "Email is required",
+                                            value = "Email is required"
+                                    ),
+                                    @ExampleObject(
+                                            name = "Unprocessable entity",
+                                            summary = "Invalid email",
+                                            value = "Invalid email"
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
+            )
+    })
+    @Schema(name = "UserEntity", implementation = UserEntity.class)
+    @SecurityRequirement(name = "bearer")
+    public ResponseEntity<?> updateUser(
+            @Valid @RequestBody
+            RegisterRequestDTO registerRequestDTO,
+            HttpServletRequest request
+    ) {
+        var id = (UUID) request.getAttribute("id");
+
+        if (id == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        try {
+            UserEntity user = updateUserUseCase.execute(new UserEntity(id, registerRequestDTO.name(),
+                    registerRequestDTO.email(), registerRequestDTO.password(), null));
+            return ResponseEntity.ok(new GetUserResponseDTO(user.getId(), user.getName(), user.getEmail()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
     @Operation(
             summary = "Get all users",
-            description = "Get all Users (Restricted to admins)"
+            description = "Retrieve a list of all users (Admin access required)."
     )
     @ApiResponses({
             @ApiResponse(
@@ -49,13 +212,43 @@ public class UsersController {
                     )
             ),
             @ApiResponse(
-                    responseCode = "400",
-                    description = "Bad request",
+                    responseCode = "401",
+                    description = "Unauthorized",
                     content = @Content(
                             mediaType = "application/json",
                             examples = {
                                     @ExampleObject(
-                                            name = "Bad request",
+                                            name = "Unauthorized",
+                                            summary = "Unauthorized",
+                                            value = "Unauthorized"
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Forbidden",
+                                            summary = "User is not an admin",
+                                            value = "User is not an admin"
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Users not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Users not found",
                                             summary = "Users not found",
                                             value = "Users not found"
                                     )
@@ -75,11 +268,18 @@ public class UsersController {
 
             if (user.getRole().contains("ROLE_ADMIN")) {
                 List<GetAllUsersResponseDTO> users = getAllUsersUseCase.execute();
+
+                if (users == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Users not found");
+                }
+
                 return ResponseEntity.ok(users);
             } else {
-                return ResponseEntity.badRequest().body("User is not an admin");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User is not an admin");
             }
 
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -87,32 +287,67 @@ public class UsersController {
 
     @Operation(
             summary = "Delete user",
-            description = "Delete a user (Restricted to admins)"
+            description = "Delete a user (Restricted to admins. Users cannot delete themselves)."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
                     description = "User deleted",
-                    content = @Content(schema = @Schema(implementation = String.class))
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid request",
                     content = @Content(
                             mediaType = "application/json",
                             examples = {
                                     @ExampleObject(
-                                            name = "Invalid request",
-                                            summary = "You can't delete yourself",
-                                            value = "You can't delete yourself"
-                                    ),
+                                            name = "User deleted",
+                                            summary = "User deleted",
+                                            value = "User deleted successfully"
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
                                     @ExampleObject(
-                                            name = "Invalid request",
+                                            name = "Unauthorized",
+                                            summary = "Unauthorized",
+                                            value = "Unauthorized"
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Forbidden",
                                             summary = "User is not an admin",
                                             value = "User is not an admin"
                                     ),
                                     @ExampleObject(
-                                            name = "Invalid request",
+                                            name = "Forbidden",
+                                            summary = "You can't delete yourself",
+                                            value = "You can't delete yourself"
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "User not found",
                                             summary = "User not found",
                                             value = "User not found"
                                     )
@@ -132,16 +367,18 @@ public class UsersController {
 
             if (user.getRole().contains("ROLE_ADMIN")) {
                 if (id.toString().equals(uuid.toString())) {
-                    return ResponseEntity.badRequest().body("You can't delete yourself");
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can't delete yourself");
                 }
 
                 deleteUserUseCase.execute(uuid);
 
                 return ResponseEntity.ok("User deleted");
             } else {
-                return ResponseEntity.badRequest().body("User is not an admin");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User is not an admin");
             }
 
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -149,34 +386,72 @@ public class UsersController {
 
     @Operation(
             summary = "Assign role",
-            description = "Assign a role to a user (Restricted to admins)"
+            description = "Assign a new role to a user (Restricted to admins. A user cannot be assigned a role they already have)."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
                     description = "Role assigned successfully",
-                    content = @Content(schema = @Schema(implementation = UserEntity.class))
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UserEntity.class)
+                    )
             ),
             @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid request",
+                    responseCode = "401",
+                    description = "Unauthorized",
                     content = @Content(
                             mediaType = "application/json",
                             examples = {
                                     @ExampleObject(
-                                            name = "Invalid request",
-                                            summary = "User is not an admin",
-                                            value = "User is not an admin"
-                                    ),
+                                            name = "Unauthorized",
+                                            summary = "Unauthorized",
+                                            value = "Unauthorized"
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
                                     @ExampleObject(
-                                            name = "Invalid request",
+                                            name = "User not found",
                                             summary = "User not found",
                                             value = "User not found"
-                                    ),
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Conflict",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
                                     @ExampleObject(
-                                            name = "Invalid request",
+                                            name = "Conflict",
                                             summary = "User already has role",
                                             value = "User already has role"
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Unprocessable entity",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Unprocessable entity",
+                                            summary = "Role is required",
+                                            value = "Role is required"
                                     )
                             },
                             schema = @Schema(implementation = String.class)
@@ -185,13 +460,17 @@ public class UsersController {
     })
     @Schema(name = "AssignRoleRequestDTO", implementation = AssignRoleRequestDTO.class)
     @SecurityRequirement(name = "bearer")
-    @PostMapping("/assign-role/{uuid}")
+    @PostMapping("/{uuid}/roles")
     public ResponseEntity<Object> assignRole(
             HttpServletRequest request,
             @Valid @RequestBody AssignRoleRequestDTO assignRoleRequestDTO,
             @PathVariable String uuid
     ) {
         var id = (UUID) request.getAttribute("id");
+
+        if (id == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
 
         try {
             UserEntity user = getUserUseCase.execute(id);
@@ -204,6 +483,8 @@ public class UsersController {
                 return ResponseEntity.badRequest().body("User is not an admin");
             }
 
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

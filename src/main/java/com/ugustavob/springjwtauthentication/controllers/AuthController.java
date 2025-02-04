@@ -10,6 +10,7 @@ import com.ugustavob.springjwtauthentication.useCases.user.LoginUserUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -33,18 +34,42 @@ public class AuthController {
 
     @Operation(
             summary = "Login",
-            description = "Login with email and password"
+            description = "Authenticate a user using email and password, returning a JWT token."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
                     description = "Login successful",
-                    content = @Content(schema = @Schema(implementation = LoginResponseDTO.class))
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LoginResponseDTO.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid email or password",
-                    content = @Content(schema = @Schema(implementation = String.class))
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "Invalid email or password",
+                                    summary = "Invalid email or password",
+                                    name = "Invalid email or password"
+                            ),
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "Unauthorized",
+                                    summary = "Unauthorized",
+                                    name = "Unauthorized"
+                            ),
+                            schema = @Schema(implementation = String.class)
+                    )
             )
     })
     @Schema(name = "LoginRequestDTO", implementation = LoginRequestDTO.class)
@@ -63,17 +88,53 @@ public class AuthController {
         }
     }
 
-    @Operation(summary = "Register", description = "Register with name, email and password")
+    @Operation(summary = "Register", description = "Create a new user account with name, email, and password.")
     @ApiResponses({
             @ApiResponse(
-                    responseCode = "200",
+                    responseCode = "201",
                     description = "Register successful",
-                    content = @Content(schema = @Schema(implementation = LoginResponseDTO.class))
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LoginResponseDTO.class)
+                    )
             ),
             @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid email or password",
-                    content = @Content(schema = @Schema(implementation = String.class))
+                    responseCode = "409",
+                    description = "Email already exists",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "Email already exists",
+                                    summary = "Email already exists",
+                                    name = "Email already exists"
+                            ),
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Invalid data",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            value = "Name is required",
+                                            summary = "Name is required",
+                                            name = "Name is required"
+                                    ),
+                                    @ExampleObject(
+                                            value = "Invalid email",
+                                            summary = "Invalid email",
+                                            name = "Invalid email"
+                                    ),
+                                    @ExampleObject(
+                                            value = "Password must have at least 6 characters",
+                                            summary = "Password must have at least 6 characters",
+                                            name = "Password must have at least 6 characters"
+                                    )
+                            },
+                            schema = @Schema(implementation = String.class)
+                    )
             )
     })
     @Schema(name = "RegisterRequestDTO", implementation = RegisterRequestDTO.class)
@@ -86,7 +147,7 @@ public class AuthController {
             UserEntity newUser = createUserUseCase.execute(body);
             String token = tokenService.generateToken(newUser);
 
-            return ResponseEntity.ok(new LoginResponseDTO(newUser.getName(), token));
+            return ResponseEntity.created(null).body(new LoginResponseDTO(newUser.getName(), token));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

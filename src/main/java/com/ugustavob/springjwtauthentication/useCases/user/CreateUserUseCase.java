@@ -2,6 +2,7 @@ package com.ugustavob.springjwtauthentication.useCases.user;
 
 import com.ugustavob.springjwtauthentication.dto.RegisterRequestDTO;
 import com.ugustavob.springjwtauthentication.entities.user.UserEntity;
+import com.ugustavob.springjwtauthentication.exceptions.UserAlreadyExistsException;
 import com.ugustavob.springjwtauthentication.repositories.user.UserRepository;
 import com.ugustavob.springjwtauthentication.security.TokenService;
 import jakarta.validation.Valid;
@@ -35,6 +36,6 @@ public class CreateUserUseCase {
             return userRepository.save(newUser);
         }
 
-        throw new RuntimeException("User already exists");
+        throw new UserAlreadyExistsException();
     }
 }

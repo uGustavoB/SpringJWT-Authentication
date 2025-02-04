@@ -2,6 +2,7 @@ package com.ugustavob.springjwtauthentication.useCases.role;
 
 import com.ugustavob.springjwtauthentication.dto.AssignRoleRequestDTO;
 import com.ugustavob.springjwtauthentication.entities.user.UserEntity;
+import com.ugustavob.springjwtauthentication.exceptions.UserAlreadyHasRoleException;
 import com.ugustavob.springjwtauthentication.repositories.user.UserRepository;
 import com.ugustavob.springjwtauthentication.useCases.user.GetUserUseCase;
 import jakarta.validation.Valid;
@@ -20,7 +21,7 @@ public class AssignRoleUseCase {
         UserEntity user = getUserUseCase.execute(userId);
 
         if (user.getRole().contains("ROLE_" + assignRoleRequestDTO.role().toUpperCase())) {
-            throw new RuntimeException("User already has this role");
+            throw new UserAlreadyHasRoleException("User already has role: " + assignRoleRequestDTO.role());
         }
         user.getRole().add("ROLE_" + assignRoleRequestDTO.role().toUpperCase());
 

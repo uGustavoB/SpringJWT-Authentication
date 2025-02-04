@@ -1,5 +1,6 @@
 package com.ugustavob.springjwtauthentication.exceptions;
 
+import org.hibernate.annotations.NotFound;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,11 @@ public class ExceptionHandlerController {
         this.messageSource = messageSource;
     }
 
+    @ExceptionHandler
+    public ResponseEntity<ErrorMessageDTO> handleUserNotFoundException(UserNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessageDTO(e.getMessage(), ""));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<List<ErrorMessageDTO>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         List<ErrorMessageDTO> dto = new ArrayList<>();
@@ -30,7 +36,7 @@ public class ExceptionHandlerController {
             dto.add(new ErrorMessageDTO(message, err.getField()));
         });
 
-        return new ResponseEntity<>(dto, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(dto, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler
@@ -38,9 +44,16 @@ public class ExceptionHandlerController {
         return new ResponseEntity<>(new ErrorMessageDTO(e.getMessage(), ""), HttpStatus.BAD_REQUEST);
     }
 
+
+
     @ExceptionHandler
-    public ResponseEntity<ErrorMessageDTO> handleUserNotFoundException(UserNotFoundException e) {
-        return new ResponseEntity<>(new ErrorMessageDTO(e.getMessage(), ""), HttpStatus.NOT_FOUND);
+    public ResponseEntity<ErrorMessageDTO> handleUserAlreadyHasRoleException(UserAlreadyHasRoleException e) {
+        return new ResponseEntity<>(new ErrorMessageDTO(e.getMessage(), ""), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorMessageDTO> handleUserAlreadyExistsException(UserAlreadyExistsException e) {
+        return new ResponseEntity<>(new ErrorMessageDTO(e.getMessage(), ""), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
